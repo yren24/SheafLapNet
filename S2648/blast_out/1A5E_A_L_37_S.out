@@ -1,0 +1,8 @@
+run BLAST >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+running 1A5E_A_WT.pssm
+ Warning: [psiblast] Query_1: Composition-based score adjustment conditioned on sequence properties and unconditional composition-based score adjustment is not supported with PSSMs, resetting to default value of standard composition-based statistics 
+
+run BLAST >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+running 1A5E_A_MT.pssm
+ Warning: [psiblast] Query_1: Composition-based score adjustment conditioned on sequence properties and unconditional composition-based score adjustment is not supported with PSSMs, resetting to default value of standard composition-based statistics 
+

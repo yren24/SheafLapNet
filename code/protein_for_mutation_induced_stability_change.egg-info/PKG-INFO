@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: protein-for-mutation-induced-stability-change
+Version: 0.1
+Summary: A wrapper of TopLapFit
+Home-page: http://weilab.math.msu.edu
+Author: JunJie Wee
+Author-email: weejunji@msu.edu
+License: Apache 2.0
+Requires-Dist: numpy
+Requires-Dist: cython
+Dynamic: author
+Dynamic: author-email
+Dynamic: home-page
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: summary

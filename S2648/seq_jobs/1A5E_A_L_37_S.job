@@ -1,0 +1,12 @@
+#!/bin/bash
+#SBATCH --time=03:00:00
+#SBATCH --nodes=1
+#SBATCH -A guowei-search
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --constraint="amd20"
+#SBATCH --mem=100G
+#SBATCH --job-name 1A5E_A_L_37_S
+#SBATCH --output=./seq_out/1A5E_A_L_37_S.out
+cd /mnt/research/guowei-search.4/junjie-proteng/S2648/features/1A5E_A_L_37_S
+python feature_seq.py 1A5E A A L 37 S 8.5

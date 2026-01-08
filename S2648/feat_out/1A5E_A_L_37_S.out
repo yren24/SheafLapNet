@@ -1,0 +1,249 @@
+ The total number of atoms is:        2301
+ ======================================
+    Begin ESES surface generation ...
+ ======================================
+ Command: MS_Intersection 1A5E_WT.xyzr  1.40  0.60  2.00
+grid dimension: 75 114 113
+initializing the grid...
+initializing the surface...
+classifying the grid points...
+compute intersections...
+
+No missing cases!
+
+surface area: 8118.74
+surface volume: 20278.8
+output info into the files...
+clean the memory...
+running time: 27.4765 seconds...
+Solvent exclusion surface generated OK.
+
+ The total number of grids in the Cartesian mesh is:
+      966150
+ The number of grids along each side is:
+          75         114         113
+ The total number of the intersection is:
+       33504
+ The total number of irregular grid points is:
+       36907
+ x, y, z left:   93.854798750000000       -25.677000600000000       -30.820000560000000     
+ ======================================
+    Done for ESES! Time =    29.366
+ ======================================
+ Temp1, 2, 3   1889529.2931972276        1227967.4082043830        1169628.7731085480     
+ The sum of sa for phi0 is   5519600.3308272725     
+ The sum of ijka for phi0 is -1644652844
+ The sum of bphi0 is:   201291111.22375658     
+ The max for bphi0 on the boundary is:   0.0000000000000000     
+ The DSLUCS solver is employed
+ *** iter, error          28   8.6882803630405508E-007
+ Boundary value problem solver cost:   2.4187729999999998     
+ The maximum of phi0 is:   518.01322051751060     
+ ==============================
+        Phi_0 extension
+ ==============================
+ Temporary sum of phi0 is:   10846366.637983816     
+ The temporary sum of phi0e is:   16366502.819859428     
+ The ratio between phi0e and phi0 is:   1.5089387410659876     
+ The ratio between io and ioe is:   1.4067132957154198     
+ The number of neighbor 2 fic val need to find for phi0 is        1009
+ The number of neighbor 2 fic val can be replaced for phi0 is     1117607
+ The number of neighbor 3 fic val need to find for phi0 is        2298
+ The number of neighbor 3 fic val can be replaced for phi0 is      743446
+ ==============================
+  Done!, Time =      1.875
+ ==============================
+ ==============================
+    Finding fictitious values
+ ==============================
+ The temporary sum of RHS before finding fic values is:  -54495.980469498762     
+ Patched used!
+ The temporary sum of RHS after finding fic values is:  -54495.980469498762     
+ ==============================
+  Done!, Time =     13.126
+ ==============================
+ Set equation is OK now!
+ The sum of sa is:   2194437426.4411163     
+ *** Enetering Linbcg for MIBPB...
+ The DSLUCS solver is employed
+ *** iter, error          78   9.9668980915320275E-007
+ *** Done!, time =     14.183
+ The sum of u is:   1179470.7934368001     
+ The total for the PBE computation is:   34.891309999999997     
+ ================================
+         U_ext + U_ext_out   
+ ================================
+ The number of neighbor 2 fic val need to find is       11256
+ The number of neighbor 2 fic val can be replaced us     1107360
+ The number of neighbor 3 fic val need to find is        4992
+ The number of neighbor 3 fic val can be replaced us      740752
+ ================================
+  Done!, time =      0.211
+ ================================
+ ================================
+         Calculating phi_rxn       
+ ================================
+ The sum of reaction field potential is:   14733125.850308994     
+ ================================
+  Done!, time =      7.128
+ ================================
+ ================================
+         Calculating Energy        
+ ================================
+ Electrostatics solvation engergy=:  -2444.3613921905576     
+ ================================
+  Done!, time =      0.009
+ ================================
+ ***********************************************************
+  Protein :1A5E_WT
+  Grid size =     0.6000
+ * Kappa^2 =  0.000000   , ionic strength =   0.000000
+ * Temperature =    298.000
+  Electrostatic energy =        -2444.36
+  Total time =    69.842
+ ***********************************************************
+ Step size tried last:   0.59999999999999998     
+ The total number of atoms is:        2293
+ ======================================
+    Begin ESES surface generation ...
+ ======================================
+ Command: MS_Intersection 1A5E_MT.xyzr  1.40  0.60  2.00
+grid dimension: 75 114 113
+initializing the grid...
+initializing the surface...
+classifying the grid points...
+compute intersections...
+
+No missing cases!
+
+surface area: 8043.62
+surface volume: 20292.2
+output info into the files...
+clean the memory...
+running time: 29.4498 seconds...
+Solvent exclusion surface generated OK.
+
+ The total number of grids in the Cartesian mesh is:
+      966150
+ The number of grids along each side is:
+          75         114         113
+ The total number of the intersection is:
+       33312
+ The total number of irregular grid points is:
+       36591
+ x, y, z left:   93.815998750000006       -25.703000620000001       -30.753000650000001     
+ ======================================
+    Done for ESES! Time =    31.319
+ ======================================
+ Temp1, 2, 3   3201074.3040255178        1261939.7353344883        1620734.5998349909     
+ The sum of sa for phi0 is   5599209.3476071432     
+ The sum of ijka for phi0 is -1061097640
+ The sum of bphi0 is:   217341634.91632748     
+ The max for bphi0 on the boundary is:   0.0000000000000000     
+ The DSLUCS solver is employed
+ *** iter, error          26   9.8710996585622038E-007
+ Boundary value problem solver cost:   2.2573620000000001     
+ The maximum of phi0 is:   505.43097089074092     
+ ==============================
+        Phi_0 extension
+ ==============================
+ Temporary sum of phi0 is:   10723061.037536018     
+ The temporary sum of phi0e is:   16214732.366394801     
+ The ratio between phi0e and phi0 is:   1.5121365354198040     
+ The ratio between io and ioe is:   1.4054566895368783     
+ The number of neighbor 2 fic val need to find for phi0 is         857
+ The number of neighbor 2 fic val can be replaced for phi0 is     1118503
+ The number of neighbor 3 fic val need to find for phi0 is        2322
+ The number of neighbor 3 fic val can be replaced for phi0 is      743918
+ ==============================
+  Done!, Time =      1.860
+ ==============================
+ ==============================
+    Finding fictitious values
+ ==============================
+ The temporary sum of RHS before finding fic values is:  -54470.151088883518     
+ Patched used!
+ The temporary sum of RHS after finding fic values is:  -54470.151088883518     
+ ==============================
+  Done!, Time =     13.053
+ ==============================
+ Set equation is OK now!
+ The sum of sa is:   2194076242.0732331     
+ *** Enetering Linbcg for MIBPB...
+ The DSLUCS solver is employed
+ *** iter, error          74   7.7498208979716656E-007
+ *** Done!, time =     13.624
+ The sum of u is:   1161401.0940356967     
+ The total for the PBE computation is:   34.073759000000003     
+ ================================
+         U_ext + U_ext_out   
+ ================================
+ The number of neighbor 2 fic val need to find is       11207
+ The number of neighbor 2 fic val can be replaced us     1108153
+ The number of neighbor 3 fic val need to find is        4989
+ The number of neighbor 3 fic val can be replaced us      741251
+ ================================
+  Done!, time =      0.223
+ ================================
+ ================================
+         Calculating phi_rxn       
+ ================================
+ The sum of reaction field potential is:   14530134.641510097     
+ ================================
+  Done!, time =      7.095
+ ================================
+ ================================
+         Calculating Energy        
+ ================================
+ Electrostatics solvation engergy=:  -2485.1377249168695     
+ ================================
+  Done!, time =      0.009
+ ================================
+ ***********************************************************
+  Protein :1A5E_MT
+  Grid size =     0.6000
+ * Kappa^2 =  0.000000   , ionic strength =   0.000000
+ * Temperature =    298.000
+  Electrostatic energy =        -2485.14
+  Total time =    70.948
+ ***********************************************************
+ Step size tried last:   0.59999999999999998     
+generate files: 1A5E_WT.pdb 1A5E_MT.pdb
+load PQR file >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+get pKa information >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+constructing index list >>>>>>>>>>>>>>>>>>>>>>>>>>>
+setup pairwise interaction >>>>>>>>>>>>>>>>>>>>>>>>
+construct features >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+construct environment feature >>>>>>>>>>>>>>>>>>>>>
+run MIBPB >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+generate secondary structure information >>>>>>>>>>
+load PQR file >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+get pKa information >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+constructing index list >>>>>>>>>>>>>>>>>>>>>>>>>>>
+setup pairwise interaction >>>>>>>>>>>>>>>>>>>>>>>>
+construct features >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+construct environment feature >>>>>>>>>>>>>>>>>>>>>
+run MIBPB >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+generate secondary structure information >>>>>>>>>>
+auxiliary feature size:  (759,)
+PH0 feature size:        (648,)
+PH12 feature size:       (420,)
+FRI feature size:        (216,)
+allocate memory for features: VDW, FRI, and CLB
+deallocate memory
+allocate memory for features: VDW, FRI, and CLB
+deallocate memory
+generate files: 1A5E_WT.pdb 1A5E_MT.pdb
+load PQR file >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+get pKa information >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+constructing index list >>>>>>>>>>>>>>>>>>>>>>>>>>>
+setup pairwise interaction >>>>>>>>>>>>>>>>>>>>>>>>
+load PQR file >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+get pKa information >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+constructing index list >>>>>>>>>>>>>>>>>>>>>>>>>>>
+setup pairwise interaction >>>>>>>>>>>>>>>>>>>>>>>>
+Lap feature size:  (1296,)
+allocate memory for features: VDW, FRI, and CLB
+deallocate memory
+allocate memory for features: VDW, FRI, and CLB
+deallocate memory
