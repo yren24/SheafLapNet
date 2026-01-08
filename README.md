@@ -11,7 +11,7 @@ Persistent Sheaf Laplacian analysis of Protein Stability and Solubility upon mut
 * fair-esm 2.0.0
 * torch 2.1.1
 * pytorch-cuda 11.7
-* softwares need to be installed (See readme at folder software)
+* softwares need to be installed (See readme at folder bin)
 
 ## Reproduce our results
 
