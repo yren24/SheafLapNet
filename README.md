@@ -15,5 +15,5 @@ Persistent Sheaf Laplacian analysis of Protein Stability and Solubility upon mut
 
 ## Reproduce our results
 
-1. Run `build_2648.py` to build the dataset
-2. Run `Fit_S2648.py` to perform the machine learning training and prediction
+1. Run `build_2648.py` `Fit_S2648.py` to generate the features for the dataset
+2. Run `SheafLapNet.py` to perform the machine learning training and prediction
