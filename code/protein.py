@@ -481,144 +481,7 @@ class protein:
 
         return features.flatten() #rips_complex_spectra
 
-    # def verify_bipartite_laplacian(self, st, psl, cutoff, extra_data, num_pts):
-    #     """
-    #     Manually constructs the Coboundary matrix D0 and compares D0.T @ D0 
-    #     with the Laplacian L0 from petls.
-    #     """
-    #     # Skip verification if using Mocks
-    #     # if "MockPSL" in str(type(psl)):
-    #     #     logging.info("Skipping Laplacian verification (Mock environment).")
-    #     #     return
-
-    #     print(f"\n" + "="*50)
-    #     print(f"VERIFICATION: Bipartite Laplacian (Cutoff={cutoff})")
-    #     print("="*50)
-        
-    #     # 1. Identify active edges (distance <= cutoff)
-    #     active_edges = []
-    #     for simplex, filt in st.get_filtration():
-    #         # print(simplex,filt)
-    #         if len(simplex) == 2 and filt <= cutoff:
-    #             # Store as tuple (u, v) with u < v
-    #             u, v = sorted(simplex)
-    #             active_edges.append((u, v, filt))
-        
-    #     if not active_edges:
-    #         print("No active edges found for verification.")
-    #         return
-
-    #     num_edges = len(active_edges)
-        
-    #     # 2. Build Coboundary Matrix D0 (Dimensions: Edges x Vertices)
-    #     # Rows = Edges, Cols = Vertices
-    #     D0 = np.zeros((num_edges, num_pts))
-        
-    #     print(f"\n1. Explicit Coboundary Matrix D0 ({num_edges} edges x {num_pts} vertices):")
-        
-    #     for row_idx, (u, v, dist) in enumerate(active_edges):
-    #         # Retrieve charges
-    #         q_u = extra_data.get((u,))[3]
-    #         q_v = extra_data.get((v,))[3]
-    #         # print('q_u,q_v',q_u,q_v)
-    #         print('u,v',u,v)
-            
-    #         d = dist if dist > 1e-9 else 1e-9
-
-    #         # Restriction maps (Formula: Charge_Sibling / Distance)
-    #         # rho(u -> uv) uses Charge of v
-    #         rho_u = q_v / d
-    #         # rho(v -> uv) uses Charge of u
-    #         rho_v = q_u / d
-            
-    #         # Orientation convention: -1 for first vertex (u), +1 for second vertex (v)
-    #         D0[row_idx, u] = -rho_u
-    #         D0[row_idx, v] = rho_v
-            
-    #         # Only print first 5 edges to avoid spamming console if large
-    #         if row_idx < 5:
-    #             print(f"  Edge {row_idx} ({u}-{v}, d={d:.2f}):")
-    #             print(f"    Col {u} (u): -{q_v:.2f}/{d:.2f} = {-rho_u:.4f}")
-    #             print(f"    Col {v} (v): +{q_u:.2f}/{d:.2f} = {rho_v:.4f}")
-        
-    #     if num_edges > 5:
-    #         print(f"  ... ({num_edges - 5} more edges omitted)")
-
-    #     # 3. Compute Expected L0 = D0.T @ D0
-    #     expected_L0 = D0.T @ D0
-    #     print('expected_L0',expected_L0)
-    #     is_expected_zero = np.allclose(expected_L0, 0, atol=1e-8)
-    #     print(f"\n[CHECK] Is expected_L0 close to zero? {is_expected_zero}")
-    #     if is_expected_zero:
-    #         print("  -> The manual calculation resulted in a zero matrix.")
-    #     else:
-    #         print(f"  -> Max value in expected_L0: {np.max(np.abs(expected_L0))}")
-
-        
-    #     # 4. Get Actual L0 from PETLS
-    #     actual_L0 = psl.get_L(0, float(cutoff), float(cutoff))
-    #     print('actual_L0',actual_L0)
-    #     is_actual_zero = np.allclose(actual_L0, 0, atol=1e-8)
-    #     print(f"\n[CHECK] Is actual_L0 close to zero? {is_actual_zero}")
-    #     if is_actual_zero:
-    #         print("  -> The manual calculation resulted in a zero matrix.")
-    #     else:
-    #         print(f"  -> Max value in actual_L0: {np.max(np.abs(actual_L0))}")
-
-        
-    #     # 5. Compare
-    #     try:
-    #         if expected_L0.shape != actual_L0.shape:
-    #             print(f"\n[FAIL] Shape Mismatch! Expected {expected_L0.shape}, Got {actual_L0.shape}")
-    #             return
-
-    #         is_close = np.allclose(actual_L0, expected_L0, rtol=1e-5, atol=1e-8)
-            
-    #         if is_close:
-    #             print(f"\n[PASS] Verification Successful: Matrices match.")
-    #         else:
-    #             print(f"\n[FAIL] Matrices do not match.")
-    #             diff = np.abs(actual_L0 - expected_L0)
-    #             print("Max difference:", np.max(diff))
-                
-    #     except Exception as e:
-    #         print(f"Verification Error: {e}")
-    #     print("="*50 + "\n")
-
-
-    #     eig_exp = np.linalg.eigvalsh(expected_L0)
-    #     eig_act = np.linalg.eigvalsh(actual_L0)
-        
-    #     # 2. Sort Eigenvalues
-    #     # Eigenvalues have no inherent order, so [1, 5, 2] is the same spectrum as [5, 1, 2].
-    #     # We must sort them to compare them element-by-element.
-    #     eig_exp = np.sort(eig_exp)
-    #     eig_act = np.sort(eig_act)
-        
-    #     # 3. Filter Numerical Noise (Significant Eigenvalues)
-    #     # Optimization libraries often drop rows of zeros (isolated vertices),
-    #     # while manual matrices keep them. This creates a mismatch in the number of 0s.
-    #     # We only care about non-zero eigenvalues (structural features).
-    #     threshold = 1e-8
-    #     non_zero_exp = eig_exp[eig_exp > threshold]
-    #     non_zero_act = eig_act[eig_act > threshold]
-
-    #     print(f"   Significant Eigenvalues (Expected): {non_zero_exp}")
-    #     print(f"   Significant Eigenvalues (Actual):   {non_zero_act}")
-
-    #     # 4. Compare
-    #     # First, check if the count of non-zero eigenvalues matches
-    #     if len(non_zero_exp) != len(non_zero_act):
-    #         print(f"[FAIL] Spectrum Mismatch! Found {len(non_zero_act)} eigenvalues, expected {len(non_zero_exp)}.")
-            
-    #     # Second, check if the values match within a tolerance
-    #     elif np.allclose(non_zero_exp, non_zero_act, atol=1e-5):
-    #          print("\n[PASS] SUCCESS! Laplacian Spectra Match.")
-    #          print("       (Note: Element-wise mismatch is expected due to vertex re-indexing optimizations).")
-    #     else:
-    #          print("[FAIL] Eigenvalues do not match.")
-    #          diff = np.abs(non_zero_exp - non_zero_act)
-    #          print(f"       Max Eigenvalue Diff: {np.max(diff)}")
+   
     def get_atom_value(self, atom):
         """Returns the scalar value (Charge or EN) based on initialized mode."""
         if self.mode == 'charge':
@@ -640,207 +503,46 @@ class protein:
             pt_group: List indicating group (Mut=0, Env=1) for bipartite check
         """
         
-        # 1. Identify Active Edges
-        # We iterate the filtration to find edges <= cutoff
         active_edges = []
         
-        # Note: In GUDHI, filtration is usually distance.
+ 
         for simplex, filt in st.get_filtration():
             if len(simplex) == 2 and filt <= cutoff:
                 u, v = sorted(simplex)
                 
-                # Bipartite Filter: Only allow edges between DIFFERENT groups
-                # This matches your physical model
                 if pt_group[u] != pt_group[v]:
                     active_edges.append((u, v, filt))
         
         if not active_edges:
-            return None # Return None if no edges (matrix is all zeros)
+            return None 
 
         num_edges = len(active_edges)
         
-        # 2. Build Coboundary Matrix D (Edges x Vertices)
-        # We use a dense matrix here since N is small (~200). 
-        # For very large N, use scipy.sparse.
+    
         D = np.zeros((num_edges, num_pts))
         
         for row_idx, (u, v, dist) in enumerate(active_edges):
             q_u = values[u]
             q_v = values[v]
             
-            # Avoid division by zero
             d = dist if dist > 1e-9 else 1e-9
-            
-            # Physics: Restriction = Charge_Sibling / Distance
-            # rho(u -> uv) uses Charge of v
             rho_u = q_v / d
-            # rho(v -> uv) uses Charge of u
             rho_v = q_u / d
             
-            # Orientation: -1 for u, +1 for v
             D[row_idx, u] = -rho_u
             D[row_idx, v] = rho_v
             
-        # 3. Compute Laplacian L = D.T @ D
         L_matrix = D.T @ D
         return L_matrix
-    # def rips_complex_sheaf_spectra(self, cutoff=16):
-    #     elecomb = ['C', 'N', 'O']
-    #     Bins = [3, 4, 5, 6, 7, 8, 9]
-    #     #Bins = [0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0]
-    #     # Bins = [2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0]
-    #     #Bins = [1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.5,8.0]
-        
-    #     # 9 combinations * number of bins * 8 statistical features
-    #     features = np.zeros((len(Bins) * len(elecomb) * len(elecomb), 8), float)
-
-    #     # 1. Identify Center (CA of mutated residue)
-    #     AtomCA = None
-    #     for iAtom in self.Atoms:
-    #         # Handle user's verboseType (e.g., "CA" or " CA ")
-    #         v_type = iAtom.verboseType.strip() if hasattr(iAtom, 'verboseType') else ""
-    #         if v_type == "CA" and iAtom.ResID == self.ResID:
-    #             AtomCA = iAtom
-    #             break
-        
-    #     if AtomCA is None:
-    #         return features.flatten()
-
-    #     res_num = self.ResID
-
-    #     # 2. Iterate element pairs
-    #     for Ip, ele1 in enumerate(elecomb):
-    #         for Is, ele2 in enumerate(elecomb):
-                
-    #             pts = []     # [x, y, z]
-    #             charges = [] # Scalar charges
-    #             pt_group = [] # 0 for Mut, 1 for Env
-    #             sheaf_values = []
-                
-    #             # 3. Select Atoms based on Element type and Environment/Mutation logic
-    #             for iAtom in self.Atoms:
-    #                 if iAtom.pos is None: continue # Skip if no position data
-
-    #                 clean_type = iAtom.atype.replace(' ', '')
-                    
-    #                 is_ele1_env = (clean_type == ele1 and iAtom.ResID != res_num)
-    #                 is_ele2_mut = (clean_type == ele2 and iAtom.ResID == res_num)
-                    
-    #                 if is_ele1_env or is_ele2_mut:
-    #                     dis = np.linalg.norm(iAtom.pos - AtomCA.pos)
-                        
-    #                     if dis <= cutoff:
-    #                         pts.append(list(iAtom.pos))
-    #                         charges.append(iAtom.Charge)
-    #                         val = self.get_atom_value(iAtom)
-    #                         sheaf_values.append(val)
-    #                         if is_ele2_mut:
-    #                             pt_group.append(0)
-    #                         else:
-    #                             pt_group.append(1)
-    #             # print(sheaf_values, charges)
-    #             num_pts = len(pts)
-    #             if num_pts < 2:
-    #                 continue
-
-    #             # 4. Construct GUDHI Rips Complex
-    #             max_r = max(Bins) + 0.1
-
-    #             # dist_matrix = np.full((num_pts, num_pts), 10000.0, dtype=float)
-                
-    #             # # Fill diagonals with 0
-    #             # np.fill_diagonal(dist_matrix, 0.0)
-                
-    #             # for i in range(num_pts):
-    #             #     for j in range(i + 1, num_pts):
-    #             #         # Bipartite Condition: Only calculate distance if groups are DIFFERENT
-    #             #         if pt_group[i] + pt_group[j] == 1:
-    #             #             d = sqrt((pts[i][0]-pts[j][0])**2 + 
-    #             #                      (pts[i][1]-pts[j][1])**2 + 
-    #             #                      (pts[i][2]-pts[j][2])**2)
-    #             #             dist_matrix[i][j] = d
-    #             #             dist_matrix[j][i] = d
-
-    #             # rips = gudhi.RipsComplex(distance_matrix=dist_matrix, max_edge_length=max_r)
-    #             rips = gudhi.RipsComplex(points=pts, max_edge_length=max_r)
-    #             st = rips.create_simplex_tree(max_dimension=1)
-    #             # rips = gudhi.RipsComplex(points=pts, max_edge_length=max_r)
-    #             # st = rips.create_simplex_tree(max_dimension=2)
-    #             # if st.dimension() < 1:
-    #             #     continue
-    #             # # 5. Prepare extra_data for PETLS
-    #             # extra_data = {}
-                
-    #             # # Add Vertices: Store Charge in index 3
-    #             # for i, (p, q) in enumerate(zip(pts, charges)):
-    #             #     extra_data[tuple([i])] = [p[0], p[1], p[2], q]
-                
-    #             # # Add Edges/Triangles
-    #             # # for simplex, _ in st.get_skeleton(2):
-    #             # #     if len(simplex) > 1:
-    #             # #         extra_data[tuple(simplex)] = 1 
-    #             # for simplex, _ in st.get_filtration():
-    #             #     if len(simplex) > 1:
-    #             #         key = tuple(int(x) for x in simplex)
-    #             #         extra_data[key] = 1.0
-    #             #     elif len(simplex) == 1:
-    #             #         key = (int(simplex[0]),)
-    #             #         if key not in extra_data:
-    #             #             idx = key[0]
-    #             #             extra_data[key] = [pts[idx][0], pts[idx][1], pts[idx][2], charges[idx]]
-    #             # 6. Construct Sheaf & Compute Laplacian
-    #             # try:
-    #                 # sst = petls.sheaf_simplex_tree(st, extra_data, restriction_formula)
-    #                 # psl = petls.PersistentSheafLaplacian(sst)
-
-    #                 # self.verify_bipartite_laplacian(st, psl, Bins[0], extra_data, num_pts)
-                    
-    #             for idx_cut, cut in enumerate(Bins):
-    #                 idx_feat = idx_cut * 9 + Ip * 3 + Is
-                    
-    #                 try:
-    #                     # dim=0 captures connected components of the signal
-    #                     # L_matrix = psl.get_L(0, float(cut), float(cut))
-    #                     L_matrix = self.compute_manual_laplacian(st, float(cut), sheaf_values, num_pts, pt_group)
-                        
-    #                     if L_matrix is not None and L_matrix.shape[0] > 0:
-    #                         eigens = np.linalg.eigvalsh(L_matrix)
-    #                         valid_eigens = eigens[eigens > 1e-8]
-                            
-    #                         if len(valid_eigens) > 0:
-    #                             if self.mode =='en':
-    #                                 features[idx_feat][0] = np.log1p(valid_eigens.sum())#valid_eigens.sum()
-    #                                 features[idx_feat][1] = valid_eigens.min()#valid_eigens.min()
-    #                                 features[idx_feat][2] = np.log1p(valid_eigens.max())#valid_eigens.max()
-    #                                 features[idx_feat][3] = np.log1p(valid_eigens.mean())#valid_eigens.mean()
-    #                                 features[idx_feat][4] = np.log1p(valid_eigens.std())#valid_eigens.std()
-    #                                 features[idx_feat][5] = np.log1p(valid_eigens.var())#valid_eigens.var()
-    #                                 features[idx_feat][6] = np.log1p(np.dot(valid_eigens, valid_eigens))#np.dot(valid_eigens, valid_eigens)
-    #                                 features[idx_feat][7] = len(valid_eigens)
-    #                             else:
-    #                                 features[idx_feat][0] = valid_eigens.sum()
-    #                                 features[idx_feat][1] = valid_eigens.min()
-    #                                 features[idx_feat][2] = valid_eigens.max()
-    #                                 features[idx_feat][3] = valid_eigens.mean()
-    #                                 features[idx_feat][4] = valid_eigens.std()
-    #                                 features[idx_feat][5] = valid_eigens.var()
-    #                                 features[idx_feat][6] = np.dot(valid_eigens, valid_eigens)#np.dot(valid_eigens, valid_eigens)
-    #                                 features[idx_feat][7] = len(valid_eigens)
-    #                 except Exception:
-    #                     continue
-    #         # except Exception:
-    #         #     continue
-
-    #     return features.flatten()
+   
     def rips_complex_sheaf_spectra(self, cutoff=16):
         elecomb = ['C', 'N', 'O']
         Bins = [3, 4, 5, 6, 7, 8, 9]
         
-        # CHANGE 1: Increase feature dimension from 8 to 9 to make room for Betti numbers
-        # 9 combinations * number of bins * 9 statistical features
+       
         features = np.zeros((len(Bins) * len(elecomb) * len(elecomb), 9), float)
 
-        # 1. Identify Center (CA of mutated residue)
+     
         AtomCA = None
         for iAtom in self.Atoms:
             v_type = iAtom.verboseType.strip() if hasattr(iAtom, 'verboseType') else ""
@@ -853,7 +555,6 @@ class protein:
 
         res_num = self.ResID
 
-        # 2. Iterate element pairs
         for Ip, ele1 in enumerate(elecomb):
             for Is, ele2 in enumerate(elecomb):
                 
@@ -861,7 +562,7 @@ class protein:
                 sheaf_values = []
                 pt_group = [] 
                 
-                # 3. Select Atoms... (Standard selection logic)
+              
                 for iAtom in self.Atoms:
                     if iAtom.pos is None: continue 
                     clean_type = iAtom.atype.replace(' ', '')
@@ -881,17 +582,14 @@ class protein:
                 if num_pts < 2:
                     continue
 
-                # 4. Construct GUDHI Rips Complex
                 max_r = max(Bins) + 0.1
 
                 dist_matrix = np.full((num_pts, num_pts), 10000.0, dtype=float)
                 
-                # Fill diagonals with 0
                 np.fill_diagonal(dist_matrix, 0.0)
                 
                 for i in range(num_pts):
                     for j in range(i + 1, num_pts):
-                        # Bipartite Condition: Only calculate distance if groups are DIFFERENT
                         if pt_group[i] + pt_group[j] == 1:
                             d = sqrt((pts[i][0]-pts[j][0])**2 + 
                                      (pts[i][1]-pts[j][1])**2 + 
@@ -903,10 +601,7 @@ class protein:
                 rips = gudhi.RipsComplex(points=pts, max_edge_length=max_r)
                 st = rips.create_simplex_tree(max_dimension=1)
 
-                # 5. Compute Laplacian Loop
                 for idx_cut, cut in enumerate(Bins):
-                    # CHANGE 2: Update index calculation if you flattened the array differently, 
-                    # but here the row index logic remains the same.
                     idx_feat = idx_cut * 9 + Ip * 3 + Is
                     
                     try:
@@ -914,13 +609,10 @@ class protein:
                         
                         if L_matrix is not None and L_matrix.shape[0] > 0:
                             eigens = np.linalg.eigvalsh(L_matrix)
-                            
-                            # Separate Harmonic (Zero) and Non-Harmonic (Non-Zero)
                             valid_eigens = eigens[eigens > 1e-8]
-                            num_zeros = len(eigens) - len(valid_eigens) # This is the Betti Number
+                            num_zeros = len(eigens) - len(valid_eigens) 
                             
                             if len(valid_eigens) > 0:
-                                # Statistical features on Non-Harmonic part
                                 if self.mode =='en':
                                     features[idx_feat][0] = np.log1p(valid_eigens.sum())
                                     features[idx_feat][1] = valid_eigens.min()
@@ -929,9 +621,7 @@ class protein:
                                     features[idx_feat][4] = np.log1p(valid_eigens.std())
                                     features[idx_feat][5] = np.log1p(valid_eigens.var())
                                     features[idx_feat][6] = np.log1p(np.dot(valid_eigens, valid_eigens))
-                                    features[idx_feat][7] = len(valid_eigens) # Number of non-harmonic features
-                                    
-                                    # CHANGE 3: Add the Harmonic Count (Zero Eigenvalues)
+                                    features[idx_feat][7] = len(valid_eigens) 
                                     features[idx_feat][8] = num_zeros 
                                 else:
                                     features[idx_feat][0] = valid_eigens.sum()
@@ -942,12 +632,9 @@ class protein:
                                     features[idx_feat][5] = valid_eigens.var()
                                     features[idx_feat][6] = np.dot(valid_eigens, valid_eigens)
                                     features[idx_feat][7] = len(valid_eigens)
-                                    
-                                    # CHANGE 3: Add the Harmonic Count (Zero Eigenvalues)
                                     features[idx_feat][8] = num_zeros
 
                             else:
-                                # Case where ALL eigenvalues are zero (e.g., completely disconnected graph)
                                 features[idx_feat][8] = len(eigens)
 
                     except Exception:
@@ -963,7 +650,6 @@ class protein:
         Note: Alpha Complex filtration values are squared distances.
         """
         
-        # 1. Identify Active Simplicies
         active_edges = []
         active_triangles = []
         edge_to_idx = {}
@@ -974,9 +660,8 @@ class protein:
                 
             if len(simplex) == 2:
                 u, v = sorted(simplex)
-                # For Alpha, we do NOT enforce bipartite, we want the geometry
                 edge_to_idx[(u, v)] = len(active_edges)
-                active_edges.append((u, v, sqrt(filt))) # filt is squared dist
+                active_edges.append((u, v, sqrt(filt)))
                 
             elif len(simplex) == 3:
                 u, v, w = sorted(simplex)
@@ -988,29 +673,22 @@ class protein:
         if num_edges == 0:
             return None
             
-        # 2. Build D0 (Coboundary 0: Edges x Vertices) -> used for D0 @ D0.T term
-        # This is the "Down" Laplacian part
         D0 = np.zeros((num_edges, num_pts))
         for row_idx, (u, v, d) in enumerate(active_edges):
             q_u = values[u]
             q_v = values[v]
             dist = d if d > 1e-9 else 1e-9
             
-            # rho(u -> uv) = q_v/d, rho(v -> uv) = q_u/d
             D0[row_idx, u] = -q_v / dist
             D0[row_idx, v] = q_u / dist
             
-        # 3. Build D1 (Coboundary 1: Triangles x Edges) -> used for D1.T @ D1 term
-        # This is the "Up" Laplacian part
         D1 = np.zeros((num_tri, num_edges))
         
         for tri_idx, (u, v, w) in enumerate(active_triangles):
-            # Edges of the triangle: (u,v), (u,w), (v,w)
             e_uv = (u, v)
             e_uw = (u, w)
             e_vw = (v, w)
             
-            # Helper to get distance between two points indices
             def get_dist(i, j):
                 return np.linalg.norm(np.array(pts[i]) - np.array(pts[j]))
 
@@ -1043,8 +721,6 @@ class protein:
                 D1[tri_idx, idx_uw] = val_uw
                 D1[tri_idx, idx_vw] = val_vw
 
-        # 4. Combine: L1 = D0 @ D0.T + D1.T @ D1
-        # Dimensions: (E x V)@(V x E) + (E x T)@(T x E) -> E x E
         L1 = (D0 @ D0.T) + (D1.T @ D1)
         return L1
 
