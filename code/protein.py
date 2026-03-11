@@ -10,7 +10,7 @@ import subprocess#Yiming
 from Bio.PDB.DSSP import make_dssp_dict#yiming
 from Bio.Blast.Applications import NcbipsiblastCommandline
 from scipy.spatial import cKDTree
-from vr_facet import vr_facet
+#from vr_facet import vr_facet
 from alpha_facet import alpha_facet
 from vr_fvector import vr_fvector
 from alpha_fvector import alpha_fvector
