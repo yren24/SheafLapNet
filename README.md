@@ -105,7 +105,7 @@ You can fully customize the model architecture and training process using the fo
 | `--epochs` | Number of training epochs | `100` |
 | `--lr` | Initial learning rate | `0.001` |
 | `--momentum` | SGD momentum factor | `0.9` |
-| `--weight_decay`| Weight decay (L2 penalty) for optimizer | `0.05` |
+| `--weight_decay`| Weight decay for optimizer | `0.05` |
 | `--layers` | Architecture dimensions (e.g., hidden layer sizes) | `2048,1024,1024,512,512,64` |
 | `--nlayer` | Total number of neural network layers | `6` |
 | `--seed` | Random seed for reproducibility | `42` |
