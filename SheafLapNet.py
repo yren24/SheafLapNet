@@ -109,7 +109,7 @@ def test(model, device, test_loader, epoch):
 
 tic = time.perf_counter()
 
-parser = argparse.ArgumentParser(description='CANet')
+parser = argparse.ArgumentParser(description='SheafLapNet')
 parser.add_argument('--dataset', type=str, default='S2648',
                     help='input batch size for training (default: 50)')
 parser.add_argument('--datatype', type=str, default='all',
@@ -277,7 +277,7 @@ for ii in range(10):
     pred_list.append(y_pred)
     true_list.append(y_real)
 
-    # fp = open(f'./S2648/{args.dataset}_blind_new_{ii}_CAnet.txt', 'w+')
+    # fp = open(f'./S2648/{args.dataset}_blind_new_{ii}_SheafLapNet.txt', 'w+')
     # for i in range(len(y_real)):
     #     fp.write(f'{y_pred[i]} {y_real[i]}\n')
     # fp.close()
@@ -299,11 +299,11 @@ true_list=np.array(true_list)
 pred_mean=pred_list.mean(axis=0)
 true_mean=true_list[0]
 
-# fp = open(f'./S2648/{args.dataset}_blind_new_{ii}_CAnet.txt', 'w+')
+# fp = open(f'./S2648/{args.dataset}_blind_new_{ii}_SheafLapNet.txt', 'w+')
 # for i in range(len(true_mean)):
 #     fp.write(f'{pred_mean[i]} {true_mean[i]}\n')
 # fp.close()
-fp = open(f'./S2648/{args.dataset}_blind_ensemble_CAnet.txt', 'w+')
+fp = open(f'./S2648/{args.dataset}_blind_ensemble_SheafLapNet.txt', 'w+')
 for i in range(len(true_mean)):
     fp.write(f'{pred_mean[i]} {true_mean[i]}\n')
 fp.close()
