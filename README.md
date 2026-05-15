@@ -68,7 +68,46 @@ python feature_seq.py <PDB ID> <Protein chains> <Mutation chain> <Wild Residue> 
 # Example
 python feature_seq.py 1AFO A A A 65 P 7.0
 ```
-## Reproduce our results
+## Reproduce Our Results
 
-1. Run `build_2648.py` `Fit_S2648.py` to generate the features for the dataset
-2. Run `SheafLapNet.py` to perform the machine learning training and prediction
+Follow these steps to construct the final dataset and train the deep learning model.
+
+### 1. Dataset Construction
+
+Aggregate the extracted features into a unified dataset matrix:
+
+```bash
+python build_2648.py
+python Fit_S2648.py
+```
+
+### 2. Model Training and Prediction
+
+Run the main neural network script to perform model training and evaluation.
+
+```bash
+# Default execution
+python SheafLapNet.py
+
+# Example with custom hyperparameters
+python SheafLapNet.py --dataset S2648 --epochs 100 --lr 0.001 --batch_size 50
+```
+
+#### Available Command-Line Arguments
+
+You can fully customize the model architecture and training process using the following arguments:
+
+| Option | Description | Default |
+| :--- | :--- | :--- |
+| `--dataset` | Target dataset for training/testing | `S2648` |
+| `--datatype` | Specific feature combinations to load | `all` |
+| `--batch_size` | Input batch size for training | `50` |
+| `--epochs` | Number of training epochs | `100` |
+| `--lr` | Initial learning rate | `0.001` |
+| `--momentum` | SGD momentum factor | `0.9` |
+| `--weight_decay`| Weight decay (L2 penalty) for optimizer | `0.05` |
+| `--layers` | Architecture dimensions (e.g., hidden layer sizes) | `2048,1024,1024,512,512,64` |
+| `--nlayer` | Total number of neural network layers | `6` |
+| `--seed` | Random seed for reproducibility | `42` |
+| `--log_interval`| Batches to wait before logging training status | `1` |
+| `--no_cuda` | Flag to disable CUDA and force CPU training | `False` |
