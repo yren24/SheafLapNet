@@ -5,9 +5,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data.dataset import Dataset
 from torch.utils.data import DataLoader
-from torchvision import transforms
 from scipy import stats
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler,MinMaxScaler
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 
@@ -34,76 +33,52 @@ def PCC(ypred, yexact):
     return pcc
 
 class TopLapNet(Dataset):
-    def __init__(self, X, y, transforms=transforms.Compose([])):
-        self.X = X
-        self.labels = y
-        self.transforms = transforms
-
-    def __getitem__(self, index):
-        X_array2tensor = torch.from_numpy(self.X[index]).float()
-        if self.transforms is not None:
-            X_array2tensor = self.transforms(X_array2tensor)
-        return (X_array2tensor, self.labels[index])
+    def __init__(self, features, labels):
+        super().__init__()
+        self.features = torch.tensor(features, dtype=torch.float32)
+        self.labels = torch.tensor(labels, dtype=torch.float32)
 
     def __len__(self):
-        return self.X.shape[0]
+        return len(self.features)
 
+    def __getitem__(self, idx):
+        return self.features[idx], self.labels[idx]
 class MultitaskModule(nn.Module):
     def __init__(self, D_in, H, D_out):
         super(MultitaskModule, self).__init__()
-
-        # input layer and initialize weights
-        self.input_layer = nn.Linear(D_in, H[0], bias=True)
+     
+        self.input_layer = nn.Linear(D_in, H[0], bias=False) 
         nn.init.xavier_uniform_(self.input_layer.weight)
+        self.bn_input = nn.BatchNorm1d(H[0])
 
-        # hiden layer and initialize weights
-        self.hiden_layers = nn.ModuleList([nn.Linear(H[i], H[i+1], bias=True) 
-                                           for i in range(len(H)-1)])
+        self.hiden_layers = nn.ModuleList([
+            nn.Linear(H[i], H[i+1], bias=False) for i in range(len(H)-1)
+        ])
         for hiden_layer in self.hiden_layers:
             nn.init.xavier_uniform_(hiden_layer.weight)
 
-        # output layer and initialize weights
-        # self.output_layer = nn.Linear(H[-1], D_out, bias=True)
+        self.bn_hidden = nn.ModuleList([
+            nn.BatchNorm1d(H[i+1]) for i in range(len(H)-1) 
+        ])
+
         self.output_layer = nn.Linear(H[-1], D_out, bias=True)
         nn.init.xavier_uniform_(self.output_layer.weight)
 
     def forward(self, X):
-        X = F.relu(self.input_layer(X))
-        for hiden_layer in self.hiden_layers:
-            X = F.relu(hiden_layer(X))
-        y = self.output_layer(X)
-        #y = -12 + 12*F.tanh(self.output_layer(X))
-        return y
+        X = self.input_layer(X)
+        # X = self.bn_input(X)
+        X = F.relu(X)
         
-# def plot_results(y_pred, y_real, title, filename_prefix):
-#     # Create JointGrid
-#     g = sns.JointGrid(x=y_pred, y=y_real, height=6, ratio=4, space=0.2)
-#     sage_green = "#90C9A5"
+        for i, hiden_layer in enumerate(self.hiden_layers):
+            X = hiden_layer(X)
+            X = self.bn_hidden[i](X)
+            X = F.relu(X)
+            
+        y = self.output_layer(X)
+        return y
 
-#     # Main Scatter
-#     g.ax_joint.scatter(
-#         y_pred, y_real, 
-#         color=sage_green, edgecolor="black", s=50, linewidth=0.8, alpha=0.9
-#     )
-
-#     # Diagonal line
-#     min_val = min(y_pred.min(), y_real.min()) - 1
-#     max_val = max(y_pred.max(), y_real.max()) + 1
-#     g.ax_joint.plot([min_val, max_val], [min_val, max_val], 'k--', linewidth=1.5, zorder=0)
-
-#     # Marginals
-#     g.plot_marginals(sns.histplot, color=sage_green, alpha=0.8, edgecolor="none", bins=20)
-
-#     # Labels
-#     g.set_axis_labels('Predicted $\Delta \Delta G$', 'Experimental $\Delta \Delta G$', fontsize=12)
-#     g.fig.suptitle(title, y=1.02, fontsize=14)
-    
-#     # Save
-#     plt.savefig(f'{filename_prefix}_scatter.png', dpi=300, bbox_inches='tight')
-#     plt.close()
-
-def train(model, device, train_loader, criterion, optimizer):
-    model.train() # tells your model that you are training the model
+def train(model, device, train_loader, criterion, optimizer, scheduler):
+    model.train() #
     for (data, target) in train_loader:
         # move tensor to computing device ('gpu' or 'cpu')
         data, target = data.to(device), target.to(device).float()
@@ -115,10 +90,12 @@ def train(model, device, train_loader, criterion, optimizer):
         output = model(data).view(-1, 1)
         loss = criterion(output, target)
         loss.backward()
+        # torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
+        scheduler.step()
 
 def test(model, device, test_loader, epoch):
-    model.eval() # tell that you are testing, == model.train(model=False)
+    model.eval() 
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device).float()
@@ -132,7 +109,7 @@ def test(model, device, test_loader, epoch):
 
 tic = time.perf_counter()
 
-parser = argparse.ArgumentParser(description='SheafLapNet')
+parser = argparse.ArgumentParser(description='CANet')
 parser.add_argument('--dataset', type=str, default='S2648',
                     help='input batch size for training (default: 50)')
 parser.add_argument('--datatype', type=str, default='all',
@@ -145,25 +122,26 @@ parser.add_argument('--lr', type=float, default=0.001,
                     help='learning rate (default: 0.001)')
 parser.add_argument('--momentum', type=float, default=0.9,
                     help='SGD momentum (default: 0.9)')
-parser.add_argument('--weight_decay', type=float, default=0,
+parser.add_argument('--weight_decay', type=float, default=0.05,
                     help='SGD weight decay (default: 0)')
 parser.add_argument('--no_cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--seed', type=int, default=1,
+parser.add_argument('--seed', type=int, default=42,
                     help='random seed (default: 1)')
-parser.add_argument('--log_interval', type=int, default=100, 
+parser.add_argument('--log_interval', type=int, default=1, 
                     help='how many batches to wait before logging training status')
-parser.add_argument('--layers', type=str, default='15000,15000,15000,15000,15000,15000',
+parser.add_argument('--layers', type=str, default='2048,1024,1024,512,512,64',
                     help='neural network layers and neural numbers')
 parser.add_argument('--nlayer', type=int, default=6,
                     help='number of neural network layers')
 args = parser.parse_args()
 print(args)
+print('args.layers:',args.layers)
 torch.manual_seed(args.seed)
 
 # setup device cuda or cpu
 use_cuda = not args.no_cuda and torch.cuda.is_available()
-device = torch.device("cuda" if use_cuda else "cpu")
+device = torch.device("cuda:2" if use_cuda else "cpu")
 #device = torch.device("cpu")
 
 # protein stability change upon mutation features and labels
@@ -182,18 +160,24 @@ elif args.datatype == 'Lap':
 elif args.datatype == 'all':
     X_val1 = np.load('./S2648/X_'+args.dataset+'_aux.npy')
     X_val2 = np.load('./S2648/X_'+args.dataset+'_FRI.npy')
-  
-    X_val3 = np.load('./S2648/X_'+args.dataset+'_ESM.npy')
+    X_val4 = np.load('./S2648/X_'+args.dataset+'_Lap_sheaf_charge01betti.npy')
+    X_val5 = np.load('./S2648/X_'+args.dataset+'_ESM.npy')
+    print("aux:", X_val1.shape)
+    print("FRI:", X_val2.shape)
+    print('ESM',X_val5.shape)
+
     
-    X_val4 = np.load('./S2648/X_'+args.dataset+'_Lap_sheaf.npy')
-    X_val = np.concatenate((X_val1, X_val2), axis=1)
- 
-    X_val = np.concatenate((X_val,  X_val3), axis=1)
-    X_val = np.concatenate((X_val,  X_val4), axis=1)
+    #X_val6 = np.load('./S2648/X_'+args.dataset+'_Lap_b.npy')
+    # X_val = np.concatenate((X_val1, X_val2), axis=1)
+    # X_val = np.concatenate((X_val,  X_val3), axis=1)
+    X_val = np.concatenate((X_val1,  X_val4), axis=1)
+    X_val = np.concatenate((X_val,  X_val5), axis=1)
+    # X_val = np.concatenate((X_val4, X_val5), axis=1)
+    # X_val =np.concatenate((X_val1, X_val4), axis=1)
+    #X_val = np.concatenate((X_val,  X_val6), axis=1)
+    # X_val=np.concatenate((X_val1,  X_val5), axis=1)
 
 X_val = normalize(X_val)[::2]
-
-# all_names = all_names[::2]
 #normalizer1 = joblib.load('model/normalizer_mini_alphafold.pkl')
 #X_val = normalizer1.transform(X_val_skempi2)
 #normalizer2 = joblib.load('model/normalizer_Lap_ESM_mini_alphafold.pkl')
@@ -204,121 +188,134 @@ X_val = normalize(X_val)[::2]
 y_val = np.load(f'./S2648/Y_{args.dataset}.npy').reshape((-1, 1))[::2]
 print('The data shape', X_val.shape, ', label size', y_val.shape)
 
-
 data = dataset_list(f'./S2648/S350.txt')
-all_data = dataset_list(f'./S2648/{args.dataset}.txt') # Matches S2648.txt
-
-# IMPORTANT: If S2648.txt has 5296 lines (fwd+rev) but X_val has 2648 (fwd only),
-# we need to ensure we are matching against the same "view" of the data.
-# Assuming S2648.txt usually contains just the 2648 forward mutations:
-if len(all_data) == len(X_val):
-    print("Text file length matches data length. Proceeding with matching.")
-elif len(all_data) == len(X_val) * 2:
-    print("Text file is double the data size. Slicing text file [::2] to match data.")
-    all_data = all_data[::2]
-
-s350_indices = [] # Renamed from test_idx to avoid conflict with KFold loop
-
-print("Identifying S350 subset indices...")
+all_data = dataset_list(f'./S2648/S2648.txt')
+train_idx = list(range(len(all_data)))
+test_idx = []
 for i in range(len(data)):
     ilist = data[i]
-    # Ensure line has enough columns before unpacking
-    if len(ilist) < 8: continue 
-    
     PDBid, Antibody, Chain, resWT, resID, resMT, pH, ddG = ilist[0], ilist[1], ilist[2], ilist[3], ilist[4], ilist[5], ilist[6], float(ilist[7])
     flag = False
-    
     for j in range(len(all_data)):
         ilist2 = all_data[j]
-        if len(ilist2) < 8: continue
-
+    
         PDBid2, Antibody2, Chain2, resWT2, resID2, resMT2, pH2, ddG2 = ilist2[0], ilist2[1], ilist2[2], ilist2[3], ilist2[4], ilist2[5], ilist2[6], float(ilist2[7])
-        
-        # Explicit Field Matching
-        if (PDBid2 == PDBid and Antibody == Antibody2 and Chain2 == Chain and 
-            resWT == resWT2 and resID == resID2 and resMT == resMT2 and pH == pH2):
-            s350_indices.append(j)
+        #print(ilist2)
+        if PDBid2 == PDBid and Antibody == Antibody2 and Chain2 == Chain and resWT == resWT2 and resID == resID2 and resMT == resMT2 and pH == pH2:
+            test_idx.append(j)
             flag = True 
             break 
     
     if flag == False:
-        print(f"Warning: S350 entry not found in S2648: {ilist}")
+        print(ilist)
 
-print(f"Found {len(s350_indices)} matching entries for S350 benchmark.")
+train_idx = list(set(train_idx)-set(test_idx))
+print(len(test_idx), len(train_idx))
+X_train, y_train = X_val[train_idx], y_val[train_idx]
+X_test, y_test = X_val[test_idx], y_val[test_idx]
 
-# --- MATCHING LOGIC END ---
+
+
 hiden_layer = [int(i) for i in args.layers.split(',')]
 
-y_pred = np.zeros(len(y_val))
-y_real = np.zeros(len(y_val))
-kwargs = {'shuffle': True, 'num_workers': 1, 'pin_memory': True} if use_cuda else {'shuffle': True}
-#kwargs = {'shuffle': True}
-kf = KFold(n_splits=5, shuffle=True, random_state=args.seed)
 
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        # These two lines force cuDNN to be deterministic (might slightly slow down training)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+kwargs = {'shuffle': True, 'num_workers': 5, 'pin_memory': True} if use_cuda else {'shuffle': True}
+
+# 2. Initialize lists to store the results of the 10 repetitions
+pcc_list = []
+rmse_list = []
+pred_list=[]
+true_list=[]
 for ii in range(10):
-    for idx, (train_idx, test_idx) in enumerate(kf.split(X_val)):
-        # setup dataloader
-        X_train, X_test = X_val[train_idx], X_val[test_idx]
-        y_train, y_test = y_val[train_idx], y_val[test_idx]
-        train_dataset = TopLapNet(X_train, y_train)
-        test_dataset  = TopLapNet(X_test, y_test)
-
-        train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, **kwargs)
-        test_loader  = DataLoader(dataset=test_dataset, batch_size=len(test_idx), **kwargs)
-
-        model = MultitaskModule(X_val.shape[1], hiden_layer, 1).to(device)
-        criterion = nn.MSELoss()
-        optimizer = optim.SGD(model.parameters(), 
-                                lr=args.lr, 
-                                momentum=args.momentum, 
-                                weight_decay=args.weight_decay)
-        lr_adjust = optim.lr_scheduler.StepLR(optimizer, step_size=300, gamma=0.1, last_epoch=-1)
-        for epoch in range(args.epochs):
-            train(model, device, train_loader, criterion, optimizer)
-            if epoch%args.log_interval == 0:
-                print('epoch %d >>>>>>>>>>>>>>>>>>>>>>>>'%epoch)
-                test(model, device, test_loader, epoch)
-                print(f'train data shape {X_train.shape}')
-                print(f'test data shape {X_test.shape}')
-            lr_adjust.step()
-        
-        print('epoch %d >>>>>>>>>>>>>>>>>>>>>>>>'%epoch)
-        test(model, device, test_loader, epoch)
-
-        model.to(device)
-        X_test = torch.from_numpy(X_test).float().to(device)
-        model.eval()
-        with torch.no_grad():
-            ypred = model(X_test)[:, 0].view(-1, 1).cpu().numpy().ravel()
-
-        y_pred[test_idx] = np.reshape(ypred, len(ypred))
-        y_real[test_idx] = np.reshape(y_test, len(y_test))
-
    
+    current_seed = args.seed + ii 
+    set_seed(current_seed)
+    
+    train_dataset = TopLapNet(X_train, y_train)
+    test_dataset  = TopLapNet(X_test, y_test)
 
-    #ypred = ypred[::2]
-    # fp = open(f'./S2648/{args.dataset}_5cv_{ii}_SheafLapNet.txt', 'w+')
+    train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True,  pin_memory=True)
+    test_loader  = DataLoader(dataset=test_dataset, batch_size=len(test_idx), shuffle=False,  pin_memory=True)
+
+    model = MultitaskModule(X_val.shape[1], hiden_layer, 1).to(device)
+    criterion = nn.L1Loss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    #optimizer = optim.SGD(model.parameters(),  lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+    
+    lr_adjust = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer, max_lr=args.lr, steps_per_epoch=len(train_loader), epochs=args.epochs, pct_start=0.3
+    )
+    
+    for epoch in range(args.epochs):
+        train(model, device, train_loader, criterion, optimizer, lr_adjust)
+        if epoch % args.log_interval == 0:
+            test(model, device, test_loader, epoch)
+        # lr_adjust.step()
+    
+    print('epoch %d >>>>>>>>>>>>>>>>>>>>>>>>'%epoch)
+    test(model, device, test_loader, epoch)
+
+    model.to(device)
+    X_test_tensor = torch.from_numpy(X_test).float().to(device)
+    model.eval()
+    with torch.no_grad():
+        ypred = model(X_test_tensor)[:, 0].view(-1, 1).cpu().numpy().ravel()
+
+    y_pred = np.reshape(ypred, len(ypred))
+    y_real = np.reshape(y_test, len(y_test))
+    pred_list.append(y_pred)
+    true_list.append(y_real)
+
+    # fp = open(f'./S2648/{args.dataset}_blind_new_{ii}_CAnet.txt', 'w+')
     # for i in range(len(y_real)):
     #     fp.write(f'{y_pred[i]} {y_real[i]}\n')
     # fp.close()
+    
     pcc = stats.pearsonr(y_pred, y_real)[0]
     rmse = np.sqrt(mean_squared_error(y_pred, y_real))
-    toc = time.perf_counter()
-    print('Final RMSE: %.3f, Rp: %.4f\nElapsed time: %.1f [min]'%(rmse, pcc, (toc-tic)/60))
-
-    fp = open(f'./S2648/{args.dataset}_CV{ii}_S2648_Preds.txt', 'w+')
-    for i in range(len(y_real)):
-        fp.write(f'{y_pred[i]} {y_real[i]}\n')
-    fp.close()
-
-    # Plot S2648
-    # plot_results(y_pred, y_real, 
-    #              f'S2648 Stability Changes (Rep {ii})', 
-    #              f'./S2648/Fig_S2648_Rep{ii}')
+ 
     
-    # else:
-    #     print(f'Repeat {ii} Result: [S2648 Full] RMSE: {rmse:.4f}, PCC: {pcc:.4f}')
-    #     print('  [Warning] No S350 matches found.')
-
+   
+    pcc_list.append(pcc)
+    rmse_list.append(rmse)
+    
     toc = time.perf_counter()
-    print('Elapsed time: %.1f [min]' % ((toc-tic)/60))
+    print('Repetition %d | Seed: %d | RMSE: %.3f, Rp: %.4f\nElapsed time: %.1f [min]' % (ii, current_seed, rmse, pcc, (toc-tic)/60))
+
+pred_list=np.array(pred_list)
+true_list=np.array(true_list)
+
+pred_mean=pred_list.mean(axis=0)
+true_mean=true_list[0]
+
+# fp = open(f'./S2648/{args.dataset}_blind_new_{ii}_CAnet.txt', 'w+')
+# for i in range(len(true_mean)):
+#     fp.write(f'{pred_mean[i]} {true_mean[i]}\n')
+# fp.close()
+fp = open(f'./S2648/{args.dataset}_blind_ensemble_CAnet.txt', 'w+')
+for i in range(len(true_mean)):
+    fp.write(f'{pred_mean[i]} {true_mean[i]}\n')
+fp.close()
+
+pcc_mean = stats.pearsonr(pred_mean, true_mean)[0]
+rmse_mean = np.sqrt(mean_squared_error(pred_mean, true_mean))
+print('ensemble:', pcc_mean, rmse_mean)
+print('plot')
+
+print("\n" + "="*40)
+print(f"RESULTS OVER 10 REPETITIONS (Base Seed: {args.seed})")
+print("="*40)
+print(f"Mean RMSE: {np.mean(rmse_list):.4f} ± {np.std(rmse_list):.4f}")
+print(f"Mean PCC:  {np.mean(pcc_list):.4f} ± {np.std(pcc_list):.4f}")
+print("="*40)
